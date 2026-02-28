@@ -15,8 +15,6 @@ app.include_router(api_router)
 
 setup_logging()
 
-_scheduler = None
-
 
 async def _run_parse_job() -> None:
     try:
@@ -30,13 +28,12 @@ async def _run_parse_job() -> None:
 async def on_startup() -> None:
     logger.info("Запуск приложения")
     await _run_parse_job()
-    global _scheduler
-    _scheduler = create_scheduler(_run_parse_job)
-    _scheduler.start()
+    app.state.scheduler = create_scheduler(_run_parse_job)
+    app.state.scheduler.start()
 
 
 @app.on_event("shutdown")
 async def on_shutdown() -> None:
     logger.info("Остановка приложения")
-    if _scheduler:
-        _scheduler.shutdown(wait=False)
+    if app.state.scheduler:
+        app.state.scheduler.shutdown(wait=False)
